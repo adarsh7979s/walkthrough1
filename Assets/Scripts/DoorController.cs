@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Video;
 
@@ -7,56 +7,71 @@ public class DoorController : MonoBehaviour
     [Header("References")]
     public Animator doorAnimator;
     public GameObject infoText;
+
+    [Header("Level Complete UI")]
     public GameObject levelCompleteCanvas;
     public VideoPlayer videoPlayer;
 
     [Header("Scene Settings")]
     public string nextSceneName = "Scene_2_Continue";
 
-    private bool triggered = false;
+    private bool hasCompleted = false;
 
     private void Start()
     {
-        // Safety: ensure video is stopped
-        if (videoPlayer != null)
-            videoPlayer.Stop();
-
+        // Safety
         if (levelCompleteCanvas != null)
             levelCompleteCanvas.SetActive(false);
+
+        if (videoPlayer != null)
+            videoPlayer.Stop();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (triggered) return;
+        if (hasCompleted) return;
 
         if (other.CompareTag("Player"))
         {
-            triggered = true;
+            hasCompleted = true;
 
-            // Open door
+            // Open door animation
             if (doorAnimator != null)
                 doorAnimator.SetBool("Open", true);
 
-            // Hide info text
+            // Hide hint text
             if (infoText != null)
                 infoText.SetActive(false);
 
-            // Show video UI
+            // Show reward UI
             if (levelCompleteCanvas != null)
                 levelCompleteCanvas.SetActive(true);
-
-            // Play video
-            if (videoPlayer != null)
-            {
-                Debug.Log("Trying to play level complete video");
-
-                videoPlayer.Play();
-                videoPlayer.loopPointReached += OnVideoFinished;
-            }
         }
     }
 
-    void OnVideoFinished(VideoPlayer vp)
+    // 🔹 Called by WATCH VIDEO button
+    public void OnWatchVideo()
+    {
+        if (videoPlayer != null)
+        {
+            videoPlayer.gameObject.SetActive(true);
+            videoPlayer.Play();
+            videoPlayer.loopPointReached += OnVideoFinished;
+        }
+    }
+
+    // 🔹 Called by SKIP button
+    public void OnSkipVideo()
+    {
+        LoadNextScene();
+    }
+
+    private void OnVideoFinished(VideoPlayer vp)
+    {
+        LoadNextScene();
+    }
+
+    private void LoadNextScene()
     {
         SceneManager.LoadScene(nextSceneName);
     }
